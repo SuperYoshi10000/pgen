@@ -1,0 +1,357 @@
+{
+    "name": "pgen",
+    "scopeName": "source.pgen",
+    "patterns": [
+        {
+            "match": "#.*?(\\r|\\n)",
+            "name": "comment.line.number-sign"
+        },
+        {
+            "begin": "(@) *(import)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "keyword.other.import" }
+            },
+            "end": "\\r|\\n|;|(?=#)",
+            "patterns": [
+                { "include": "#strings" },
+                {
+                    "match": "(->) *([a-zA-Z_]\\w*|\\*)",
+                    "captures": {
+                        "1": { "name": "keyword.operator" },
+                        "2": { "name": "variable.other.constant" }
+                    }
+                }
+            ]
+        },
+        {
+            "begin": "(@) *(var) +([a-zA-Z_]\\w*)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "storage.type" },
+                "3": { "name": "variable.other.constant" }
+            },
+            "end": "\\r|\\n|;|(?=#)",
+            "patterns": [
+                { "include": "#strings" },
+                { "include": "#evals" },
+                { "include": "#functioncalls" }
+            ]
+        }, {
+            "begin": "(@) *(class) +([a-zA-Z_]\\w*)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "storage.type" },
+                "3": { "name": "entity.name.type.class" }
+            },
+            "end": "\\{",
+            "patterns": [
+                { "include": "#generics" },
+                { "include": "#typeannotation" }
+            ]
+        }, {
+            "match": "($) *([a-zA-Z_]\\w*)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "variable.other.constant" }
+            }
+        }, {
+            "match": "(@) *(assert|if|else|elif|try|catch|finally|for|while|foreach|ret|break|continue|switch)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "keyword.control" }
+            }
+        }, {
+            "match": "(?<= )((0b|0o)?[\\de\\.+-]+| 0x[\\da-fA-Fp\\.+-])",
+            "name": "constant.numeric"
+        }, {
+            "match": "(@) *(true|false|null|undefined)",
+            "name": "constant.language"
+        }, {
+            "begin": "([a-zA-Z_]\\w*) *(\\(|\\{)",
+            "beginCaptures": {
+                "1": { "name": "entity.name.function" }
+            },
+            "end": "\\)|\\}",
+            "patterns": [
+                { "include": "#strings" },
+                { "include": "#evals" },
+                { "include": "#functioncalls" }
+            ]
+        }, {
+            "begin": "(@) *(fn) +([a-zA-Z_]\\w*)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "storage.type" },
+                "3": { "name": "entity.name.function" }
+            },
+            "end": "\\{",
+            "patterns": [
+                { "include": "#typeannotation" }
+            ]
+        },
+        { "include": "#everything" },
+        { "include": "#strings" },
+        { "include": "#typeannotation" },
+        { "include": "#assignment" },
+        { "include": "#vardef" },
+        { "include": "#classdef" },
+        { "include": "#varusage" },
+        { "include": "#controlstatement" },
+        { "include": "#number" },
+        { "include": "#constantvalue" },
+        { "include": "#functioncalls" }
+    ],
+    "repository": {
+        "everything": {
+            "patterns": [
+                { "include": "#everything" },
+                { "include": "#strings" },
+                { "include": "#typeannotation" },
+                { "include": "#assignment" },
+                { "include": "#vardef" },
+                { "include": "#classdef" },
+                { "include": "#varusage" },
+                { "include": "#controlstatement" },
+                { "include": "#number" },
+                { "include": "#constantvalue" },
+                { "include": "#functioncalls" }
+            ]
+        },
+        "typeannotation": {
+            "begin": "(:) *([a-zA-Z_]\\w*)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "entity.name.type.class" }
+            },
+            "end": "[ \\r\\n,;=#\\(\\)\\[\\]\\{\\}>]",
+            "patterns": [
+                { "include": "#generics" }
+            ]
+        },
+        "generics": {
+            "begin": "<",
+            "beginCaptures": {
+                "0": { "name": "keyword.operator" }
+            },
+            "end": ">",
+            "endCaptures": {
+                "0": { "name": "keyword.operator" }
+            },
+            "patterns": [
+                {
+                    "match": "[a-zA-Z_]\\w*",
+                    "name": "entity.name.type.class"
+                },
+                {
+                    "match": "\\?",
+                    "name": "storage.type.generic.wildcard"
+                },
+                {
+                    "match": "&|\\|",
+                    "name": "keyword.operator.separator"
+                },
+                {
+                    "match": ":",
+                    "name": "keyword.operator"
+                },
+                {
+                    "match": ",",
+                    "name": "keyword.operator.delimiter"
+                },
+                {
+                    "match": "\\.",
+                    "name": "keyword.operator.period"
+                },
+                { "include": "#generics" }
+            ]
+        },
+        "assignment": {
+            "begin": "=",
+            "beginCaptures": {
+                "0": { "name": "keyword.operator.assignment" }
+            },
+            "end": "\\r|\\n|(;)",
+            "endCaptures": {
+                "1": { "name": "punctuation.terminator" }
+            },
+            "patterns": [
+                { "include": "#strings" }
+            ]
+        },
+        "strings": {
+			"patterns": [
+				{
+					"begin": "\"\"\"",
+					"beginCaptures": {
+						"0": { "name": "punctuation.definition.string.begin" }
+					},
+					"end": "\"\"\"",
+					"endCaptures": {
+						"0": { "name": "punctuation.definition.string.end" }
+					},
+					"name": "string.quoted.triple",
+					"patterns": [
+						{
+							"match": "(\\\\\"\"\")(?!\")|(\\\\.)",
+							"name": "constant.character.escape"
+						}
+					]
+				},
+				{
+					"begin": "\"",
+					"beginCaptures": {
+						"0": { "name": "punctuation.definition.string.begin" }
+					},
+					"end": "\"",
+					"endCaptures": {
+						"0": { "name": "punctuation.definition.string.end" }
+					},
+					"name": "string.quoted.double",
+					"patterns": [
+						{
+							"match": "\\\\.",
+							"name": "constant.character.escape"
+						}
+					]
+				},
+				{
+					"begin": "'",
+					"beginCaptures": {
+						"0": { "name": "punctuation.definition.string.begin" }
+					},
+					"end": "'",
+					"endCaptures": {
+						"0": { "name": "punctuation.definition.string.end" }
+					},
+					"name": "string.quoted.single",
+					"patterns": [
+						{
+							"match": "\\\\.",
+							"name": "constant.character.escape"
+						}
+					]
+				}
+			]
+		},
+        "evals": {
+            "begin": "`",
+            "beginCaptures": {
+                "0": { "name": "punctuation.definition.string.begin" }
+            },
+            "end": "`",
+            "endCaptures": {
+                "0": { "name": "punctuation.definition.string.end" }
+            },
+            "name": "string.quoted.evaluatable",
+            "contentName": "markup.italic",
+            "patterns": [
+                {
+                    "match": "(\\\\\"\"\")(?!\")|(\\\\.)",
+                    "name": "constant.character.escape"
+                },
+                { "include": "#strings" },
+                { "include": "#typeannotation" },
+                { "include": "#assignment" },
+                { "include": "#vardef" },
+                { "include": "#classdef" },
+                { "include": "#varusage" },
+                { "include": "#controlstatement" },
+                { "include": "#number" },
+                { "include": "#constantvalue" },
+                { "include": "#functioncalls" }
+            ]
+        },
+        "vardef": {
+            "begin": "(@) *(var) +([a-zA-Z_]\\w*)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "storage.type" },
+                "3": { "name": "variable.other.constant" }
+            },
+            "end": "\\r|\\n|(;)",
+            "endCaptures": {
+                "1": { "name": "punctuation.terminator" }
+            },
+            "patterns": [
+                { "include": "#typeannotation" }
+            ]
+        },
+        "classdef": {
+            "begin": "(@) *(class) +([a-zA-Z_]\\w*)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "storage.type" },
+                "3": { "name": "entity.name.type.class" }
+            },
+            "end": "{",
+            "patterns": [
+                { "include": "#generics" },
+                { "include": "#typeannotation" }
+            ]
+        },
+        "varusage": {
+            "match": "($) *([a-zA-Z_]\\w*)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "variable.other.constant" }
+            }
+        },
+        "controlstatement":  {
+            "match": "(@) *(assert|if|else|elif|try|catch|finally|for|while|foreach|ret|break|continue|switch)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "keyword.control" }
+            }
+        },
+
+        "functioncalls": {
+            "begin": "([a-zA-Z_]\\w*) *(\\(|\\{)",
+            "beginCaptures": {
+                "1": { "name": "entity.name.function" }
+            },
+            "end": "\\)|\\}",
+            "patterns": [
+                { "include": "#strings" },
+                { "include": "#evals" },
+                { "include": "#functioncalls" }
+            ]
+        },
+
+        "functiondefs": {
+            "begin": "(@) *(fn) +([a-zA-Z_]\\w*)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "storage.type" },
+                "3": { "name": "entity.name.function" }
+            },
+            "end": "\\{",
+            "patterns": [
+                { "include": "#parameter" },
+                { "include": "#typeannotation" }
+            ]
+        },
+
+        "parameter": {
+            "begin": "[a-zA-Z_]\\w*",
+            "beginCaptures": {
+                "0": { "name": "variable.parameter" }
+            },
+            "end": ",|\\)",
+            "patterns": [
+                { "include": "#typeannotation" }
+            ]
+        },
+
+        "number": {
+            "match": "(?<= )((0b|0o)?[\\de\\.+-]+| 0x[\\da-fA-Fp\\.+-])",
+            "name": "constant.numeric"
+        },
+        "constantvalue": {
+            "match": "(@) *(true|false|null|undefined)",
+            "captures": {
+                "2": { "name": "constant.language" }
+            }
+        }
+    }
+}
