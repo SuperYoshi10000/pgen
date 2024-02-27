@@ -5,9 +5,8 @@
         {
             "match": "#.*?(\\r|\\n)",
             "name": "comment.line.number-sign"
-        },
-        {
-            "begin": "(@) *(import)",
+        }, {
+            "begin": "(@) *(import|native)",
             "beginCaptures": {
                 "1": { "name": "keyword.operator" },
                 "2": { "name": "keyword.other.import" }
@@ -23,9 +22,8 @@
                     }
                 }
             ]
-        },
-        {
-            "begin": "(@) *(var) +([a-zA-Z_]\\w*)",
+        }, {
+            "begin": "(@) *(var|V) +([a-zA-Z_]\\w*)",
             "beginCaptures": {
                 "1": { "name": "keyword.operator" },
                 "2": { "name": "storage.type" },
@@ -38,13 +36,27 @@
                 { "include": "#functioncalls" }
             ]
         }, {
-            "begin": "(@) *(class) +([a-zA-Z_]\\w*)",
+            "begin": "(@) *(val|F) +([a-zA-Z_]\\w*)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "storage.type" },
+                "3": { "name": "variable.other.constant" }
+            },
+            "end": "[\\r\\n=]|(;)",
+            "endCaptures": {
+                "1": { "name": "punctuation.terminator" }
+            },
+            "patterns": [
+                { "include": "#typeannotation" }
+            ]
+        }, {
+            "begin": "(@) *(class|C) +([a-zA-Z_]\\w*)",
             "beginCaptures": {
                 "1": { "name": "keyword.operator" },
                 "2": { "name": "storage.type" },
                 "3": { "name": "entity.name.type.class" }
             },
-            "end": "\\{",
+            "end": "\\{|->",
             "patterns": [
                 { "include": "#generics" },
                 { "include": "#typeannotation" }
@@ -62,24 +74,74 @@
                 "2": { "name": "keyword.control" }
             }
         }, {
-            "match": "(?<= )((0b|0o)?[\\de\\.+-]+| 0x[\\da-fA-Fp\\.+-])",
+            "match": "(?<!\\w)((0b|0o)?[\\de\\.+-]+| 0x[\\da-fA-Fp\\.+-])",
             "name": "constant.numeric"
         }, {
             "match": "(@) *(true|false|null|undefined)",
-            "name": "constant.language"
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "constant.language" }
+            }
         }, {
-            "begin": "([a-zA-Z_]\\w*) *(\\(|\\{)",
-            "beginCaptures": {
-                "1": { "name": "entity.name.function" }
-            },
-            "end": "\\)|\\}",
-            "patterns": [
-                { "include": "#strings" },
-                { "include": "#evals" },
-                { "include": "#functioncalls" }
-            ]
+            "patterns": [{
+                "begin": "([a-zA-Z_]\\w*) *\\(",
+                "beginCaptures": {
+                    "1": { "name": "entity.name.function" }
+                },
+                "end": "\\)",
+                "patterns": [
+                    { "include": "#comment" },
+                    { "include": "#strings" },
+                    { "include": "#evals" },
+                    { "include": "#functioncalls" },
+                    { "include": "#constantvalue" }
+                ]
+            }, {
+                "begin": "([a-zA-Z_]\\w*) *\\{",
+                "beginCaptures": {
+                    "1": { "name": "entity.name.function" }
+                },
+                "end": "\\}",
+                "patterns": [
+                    { "include": "#comment" },
+                    { "include": "#strings" },
+                    { "include": "#evals" },
+                    { "include": "#functioncalls" },
+                    { "include": "#constantvalue" }
+                ]
+            }, {
+                "begin": "(?:([a-zA-Z_]\\w*)|\\)) *(`)",
+                "beginCaptures": {
+                    "1": { "name": "entity.name.function" },
+                    "2": { "name": "punctuation.definition.string.start" }
+                },
+                "end": "`",
+                "endCaptures": {
+                    "2": { "name": "punctuation.definition.string.end" }
+                },
+                "name": "string.quoted.evaluatable",
+                "contentName": "markup.italic",
+                "patterns": [
+                    {
+                        "match": "(\\\\\"\"\")(?!\")|(\\\\.)",
+                        "name": "constant.character.escape"
+                    },
+                    { "include": "#strings" },
+                    { "include": "#comment" },
+                    { "include": "#typeannotation" },
+                    { "include": "#assignment" },
+                    { "include": "#vardef" },
+                    { "include": "#valuedef" },
+                    { "include": "#classdef" },
+                    { "include": "#varusage" },
+                    { "include": "#controlstatement" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" },
+                    { "include": "#number" },
+                    { "include": "#constantvalue" },
+                    { "include": "#functioncalls" }
+                ]
+            }]
         }, {
-            "begin": "(@) *(fn) +([a-zA-Z_]\\w*)",
+            "begin": "(@) *(fn|M) +([a-zA-Z_]\\w*)",
             "beginCaptures": {
                 "1": { "name": "keyword.operator" },
                 "2": { "name": "storage.type" },
@@ -89,43 +151,216 @@
             "patterns": [
                 { "include": "#typeannotation" }
             ]
+        }, {
+            "begin": "\\{",
+            "beginCaptures": {
+                "0": { "name": "keyword.operator.block.start" }
+            },
+            "end": "\\}",
+            "endCaptures": {
+                "0": { "name": "keyword.operator.block.end" }
+            },
+            "patterns": [
+                { "include": "#strings" },
+                { "include": "#comment" },
+                { "include": "#typeannotation" },
+                { "include": "#assignment" },
+                { "include": "#vardef" },
+                { "include": "#valuedef" },
+                { "include": "#classdef" },
+                { "include": "#varusage" },
+                { "include": "#controlstatement" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" },
+                { "include": "#number" },
+                { "include": "#constantvalue" },
+                { "include": "#functioncalls" },
+                { "include": "#block" }
+            ]
+        }, {
+            "begin": "\"\"\"",
+            "beginCaptures": {
+                "0": { "name": "punctuation.definition.string.begin" }
+            },
+            "end": "\"\"\"",
+            "endCaptures": {
+                "0": { "name": "punctuation.definition.string.end" }
+            },
+            "name": "string.quoted.triple",
+            "patterns": [
+                {
+                    "match": "(\\\\\"\"\")(?!\")|(\\\\.)",
+                    "name": "constant.character.escape"
+                }
+            ]
+        }, {
+            "begin": "\"",
+            "beginCaptures": {
+                "0": { "name": "punctuation.definition.string.begin" }
+            },
+            "end": "\"",
+            "endCaptures": {
+                "0": { "name": "punctuation.definition.string.end" }
+            },
+            "name": "string.quoted.double",
+            "patterns": [
+                {
+                    "match": "\\\\.",
+                    "name": "constant.character.escape"
+                }
+            ]
+        }, {
+            "begin": "'",
+            "beginCaptures": {
+                "0": { "name": "punctuation.definition.string.begin" }
+            },
+            "end": "'",
+            "endCaptures": {
+                "0": { "name": "punctuation.definition.string.end" }
+            },
+            "name": "string.quoted.single",
+            "patterns": [
+                {
+                    "match": "\\\\.",
+                    "name": "constant.character.escape"
+                }
+            ]
+        }, {
+            "match": "(@) *(input|output|log|arg|hasArg|flag|hasFlag|switch|hasSwitch|env|exec|files)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "support.function" }
+            }
+        }, {
+            "match": "(@) *(String|Number|Integer|Boolean|Function|Object|Class|Void|File|Array|Map|Set|Buffer|Stream)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "support.class" }
+            }
+        }, {
+            "match": "(@) *(args|flags|switches)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "support.variable" }
+            }
+        }, {
+            "match": "(@) *(this|super)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "variable.language" }
+            }
+        }, {
+            "match": "(@) *(public|protected|private|static|final)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "variable.language" }
+            }
         },
         { "include": "#everything" },
         { "include": "#strings" },
+        { "include": "#comment" },
         { "include": "#typeannotation" },
         { "include": "#assignment" },
         { "include": "#vardef" },
+        { "include": "#valuedef" },
         { "include": "#classdef" },
         { "include": "#varusage" },
-        { "include": "#controlstatement" },
+        { "include": "#controlstatement" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" },
         { "include": "#number" },
         { "include": "#constantvalue" },
-        { "include": "#functioncalls" }
+        { "include": "#functioncalls" },
+        { "include": "#block" }
     ],
     "repository": {
+        "comment": {
+            "match": "#.*?(\\r|\\n)",
+            "name": "comment.line.number-sign"
+        },
+        "block": {
+            "begin": "\\{",
+            "beginCaptures": {
+                "0": { "name": "punctuation.block.start" }
+            },
+            "end": "\\}",
+            "endCaptures": {
+                "0": { "name": "punctuation.block.end" }
+            },
+            "patterns": [
+                { "include": "#strings" },
+                { "include": "#comment" },
+                { "include": "#typeannotation" },
+                { "include": "#assignment" },
+                { "include": "#vardef" },
+                { "include": "#valuedef" },
+                { "include": "#classdef" },
+                { "include": "#varusage" },
+                { "include": "#controlstatement" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" },
+                { "include": "#number" },
+                { "include": "#constantvalue" },
+                { "include": "#functioncalls" },
+                { "include": "#block" }
+            ]
+        },
         "everything": {
             "patterns": [
                 { "include": "#everything" },
+                { "include": "#comment" },
                 { "include": "#strings" },
                 { "include": "#typeannotation" },
                 { "include": "#assignment" },
                 { "include": "#vardef" },
+                { "include": "#valuedef" },
                 { "include": "#classdef" },
                 { "include": "#varusage" },
-                { "include": "#controlstatement" },
+                { "include": "#controlstatement" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" },
                 { "include": "#number" },
                 { "include": "#constantvalue" },
-                { "include": "#functioncalls" }
+                { "include": "#functioncalls" },
+                { "include": "#block" }
             ]
         },
         "typeannotation": {
-            "begin": "(:) *([a-zA-Z_]\\w*)",
+            "begin": ": *(?=@?)",
             "beginCaptures": {
-                "1": { "name": "keyword.operator" },
-                "2": { "name": "entity.name.type.class" }
+                "0": { "name": "keyword.operator" }
             },
-            "end": "[ \\r\\n,;=#\\(\\)\\[\\]\\{\\}>]",
+            "end": "[ \\r\\n,;=#\\)\\{\\}>]",
             "patterns": [
+                { "include": "#types" }
+            ]
+        },
+        "types": {
+            "patterns": [
+                {
+                    "match": "[a-zA-Z_]\\w*",
+                    "name": "entity.name.type.class"
+                }, {
+                    "match": "\\?",
+                    "name": "storage.type.generic.wildcard"
+                }, {
+                    "match": "&|\\||+",
+                    "name": "keyword.operator.separator"
+                }, {
+                    "match": ":",
+                    "name": "keyword.operator"
+                }, {
+                    "match": ",",
+                    "name": "keyword.operator.delimiter"
+                }, {
+                    "match": "\\.",
+                    "name": "keyword.operator.period"
+                }, {
+                    "begin": "\\(",
+                    "beginCapture": {
+                        "0": { "name": "punctuation.group.types.start" }
+                    },
+                    "end": "\\)",
+                    "endCapture": {
+                        "0": { "name": "punctuation.group.types.end" }
+                    },
+                    "name": "meta.group.type",
+                    "patterns": [
+                        { "include": "#types" }
+                    ]
+                },
                 { "include": "#generics" }
             ]
         },
@@ -139,31 +374,7 @@
                 "0": { "name": "keyword.operator" }
             },
             "patterns": [
-                {
-                    "match": "[a-zA-Z_]\\w*",
-                    "name": "entity.name.type.class"
-                },
-                {
-                    "match": "\\?",
-                    "name": "storage.type.generic.wildcard"
-                },
-                {
-                    "match": "&|\\|",
-                    "name": "keyword.operator.separator"
-                },
-                {
-                    "match": ":",
-                    "name": "keyword.operator"
-                },
-                {
-                    "match": ",",
-                    "name": "keyword.operator.delimiter"
-                },
-                {
-                    "match": "\\.",
-                    "name": "keyword.operator.period"
-                },
-                { "include": "#generics" }
+                { "include": "#types" }
             ]
         },
         "assignment": {
@@ -176,7 +387,11 @@
                 "1": { "name": "punctuation.terminator" }
             },
             "patterns": [
-                { "include": "#strings" }
+                { "include": "#strings" },
+                { "include": "#comment" },
+                { "include": "#evals" },
+                { "include": "#number" },
+                { "include": "#constantvalue" }
             ]
         },
         "strings": {
@@ -197,8 +412,7 @@
 							"name": "constant.character.escape"
 						}
 					]
-				},
-				{
+				}, {
 					"begin": "\"",
 					"beginCaptures": {
 						"0": { "name": "punctuation.definition.string.begin" }
@@ -214,8 +428,7 @@
 							"name": "constant.character.escape"
 						}
 					]
-				},
-				{
+				}, {
 					"begin": "'",
 					"beginCaptures": {
 						"0": { "name": "punctuation.definition.string.begin" }
@@ -231,7 +444,8 @@
 							"name": "constant.character.escape"
 						}
 					]
-				}
+				},
+                { "include": "#evals" }
 			]
 		},
         "evals": {
@@ -251,19 +465,22 @@
                     "name": "constant.character.escape"
                 },
                 { "include": "#strings" },
+                { "include": "#comment" },
                 { "include": "#typeannotation" },
                 { "include": "#assignment" },
                 { "include": "#vardef" },
+                { "include": "#valuedef" },
                 { "include": "#classdef" },
                 { "include": "#varusage" },
-                { "include": "#controlstatement" },
+                { "include": "#controlstatement" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" },
                 { "include": "#number" },
                 { "include": "#constantvalue" },
-                { "include": "#functioncalls" }
+                { "include": "#functioncalls" },
+                { "include": "#block" }
             ]
         },
         "vardef": {
-            "begin": "(@) *(var) +([a-zA-Z_]\\w*)",
+            "begin": "(@) *(var|V) +([a-zA-Z_]\\w*)",
             "beginCaptures": {
                 "1": { "name": "keyword.operator" },
                 "2": { "name": "storage.type" },
@@ -272,19 +489,31 @@
             "end": "\\r|\\n|(;)",
             "endCaptures": {
                 "1": { "name": "punctuation.terminator" }
+            }
+        },
+        "valuedef": {
+            "begin": "(@) *(val|F) +([a-zA-Z_]\\w*)",
+            "beginCaptures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "storage.type" },
+                "3": { "name": "variable.other.constant" }
+            },
+            "end": "[\\r\\n=]|(;)",
+            "endCaptures": {
+                "1": { "name": "punctuation.terminator" }
             },
             "patterns": [
                 { "include": "#typeannotation" }
             ]
         },
         "classdef": {
-            "begin": "(@) *(class) +([a-zA-Z_]\\w*)",
+            "begin": "(@) *(class|C) +([a-zA-Z_]\\w*)",
             "beginCaptures": {
                 "1": { "name": "keyword.operator" },
                 "2": { "name": "storage.type" },
                 "3": { "name": "entity.name.type.class" }
             },
-            "end": "{",
+            "end": "\\{",
             "patterns": [
                 { "include": "#generics" },
                 { "include": "#typeannotation" }
@@ -297,7 +526,7 @@
                 "2": { "name": "variable.other.constant" }
             }
         },
-        "controlstatement":  {
+        "controlstatement": {
             "match": "(@) *(assert|if|else|elif|try|catch|finally|for|while|foreach|ret|break|continue|switch)",
             "captures": {
                 "1": { "name": "keyword.operator" },
@@ -305,27 +534,110 @@
             }
         },
 
+        "specialfunction": {
+            "match": "(@) *(input|output|log|arg|flag|hasFlag|switch|hasSwitch|env|exec|files)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "support.function" }
+            }
+        },
+        "specialtype": {
+            "match": "(@) *(String|Number|Integer|Boolean|Function|Object|Class|Void|File|Array|Map|Set|Buffer|Stream)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "support.class" }
+            }
+        },
+        "specialvariable": {
+            "match": "(@) *(args|flags|switches)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "support.variable" }
+            }
+        },
+        "langvariable": {
+            "match": "(@) *(this|super)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "variable.language" }
+            }
+        },
+
+        "modifier": {
+            "match": "(@) *(public|protected|private|static|final)",
+            "captures": {
+                "1": { "name": "keyword.operator" },
+                "2": { "name": "variable.language" }
+            }
+        },
+
         "functioncalls": {
-            "begin": "([a-zA-Z_]\\w*) *(\\(|\\{)",
-            "beginCaptures": {
-                "1": { "name": "entity.name.function" }
-            },
-            "end": "\\)|\\}",
-            "patterns": [
-                { "include": "#strings" },
-                { "include": "#evals" },
-                { "include": "#functioncalls" }
-            ]
+            "patterns": [{
+                "begin": "([a-zA-Z_]\\w*) *\\(",
+                "beginCaptures": {
+                    "1": { "name": "entity.name.function" }
+                },
+                "end": "\\)",
+                "patterns": [
+                    { "include": "#strings" },
+                    { "include": "#evals" },
+                    { "include": "#functioncalls" },
+                    { "include": "#number" },
+                    { "include": "#constantvalue" }
+                ]
+            }, {
+                "begin": "([a-zA-Z_]\\w*) *\\{",
+                "beginCaptures": {
+                    "1": { "name": "entity.name.function" }
+                },
+                "end": "\\}",
+                "endCaptures": {
+                    "0": { "name": "keyword.operator.closing" }
+                },
+                "patterns": [
+                    { "include": "#strings" },
+                    { "include": "#evals" },
+                    { "include": "#functioncalls" },
+                    { "include": "#number" },
+                    { "include": "#constantvalue" }
+                ]
+            }, {
+                "begin": "(?:([a-zA-Z_]\\w*)|\\)) *`",
+                "beginCaptures": {
+                    "1": { "name": "entity.name.function" }
+                },
+                "end": "`",
+                "name": "string.quoted.evaluatable",
+                "contentName": "markup.italic",
+                "patterns": [
+                    {
+                        "match": "(\\\\\"\"\")(?!\")|(\\\\.)",
+                        "name": "constant.character.escape"
+                    },
+                    { "include": "#strings" },
+                    { "include": "#typeannotation" },
+                    { "include": "#assignment" },
+                    { "include": "#vardef" },
+                    { "include": "#valuedef" },
+                    { "include": "#classdef" },
+                    { "include": "#varusage" },
+                    { "include": "#controlstatement" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" }, { "include": "#specialfunction" }, { "include": "#specialvariable" }, { "include": "#langvariable" },
+                    { "include": "#number" },
+                    { "include": "#constantvalue" },
+                    { "include": "#functioncalls" },
+                    { "include": "#block" }
+                ]
+            }]
         },
 
         "functiondefs": {
-            "begin": "(@) *(fn) +([a-zA-Z_]\\w*)",
+            "begin": "(@) *(fn|M) +([a-zA-Z_]\\w*)",
             "beginCaptures": {
                 "1": { "name": "keyword.operator" },
                 "2": { "name": "storage.type" },
                 "3": { "name": "entity.name.function" }
             },
-            "end": "\\{",
+            "end": "\\{|->",
             "patterns": [
                 { "include": "#parameter" },
                 { "include": "#typeannotation" }
@@ -333,9 +645,9 @@
         },
 
         "parameter": {
-            "begin": "[a-zA-Z_]\\w*",
+            "begin": "(?<=\\(|,) *([a-zA-Z_]\\w*)",
             "beginCaptures": {
-                "0": { "name": "variable.parameter" }
+                "1": { "name": "variable.parameter" }
             },
             "end": ",|\\)",
             "patterns": [
@@ -344,12 +656,13 @@
         },
 
         "number": {
-            "match": "(?<= )((0b|0o)?[\\de\\.+-]+| 0x[\\da-fA-Fp\\.+-])",
+            "match": "(?<!\\w)((0b|0o)?[\\de\\.+-]+| 0x[\\da-fA-Fp\\.+-])",
             "name": "constant.numeric"
         },
         "constantvalue": {
             "match": "(@) *(true|false|null|undefined)",
             "captures": {
+                "1": { "name": "keyword.operator" },
                 "2": { "name": "constant.language" }
             }
         }
